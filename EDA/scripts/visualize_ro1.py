@@ -10,7 +10,6 @@ plt.rcParams['axes.unicode_minus'] = False
 OUT_DIR = 'EDA/plots'
 os.makedirs(OUT_DIR, exist_ok=True)
 
-# 2021년(dataset1)만 사용
 RAW_PATH = 'data/raw/kwater_recipe06_dataset1.xlsx'
 
 COLUMNS = [

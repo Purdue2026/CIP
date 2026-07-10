@@ -1,3 +1,7 @@
+"""
+사이클(cycle_id)별 지속 시간(시간 단위) 막대그래프
+"""
+
 import pandas as pd
 import matplotlib.pyplot as plt
 import os

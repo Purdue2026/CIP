@@ -23,17 +23,11 @@
 ## `dataset_stage1.csv` 설명
 
 생성 스크립트: [`../EDA/scripts/build_dataset_stage1.py`](../EDA/scripts/build_dataset_stage1.py), 
-결과 로그: [`../EDA/results/stage1_pipeline_results.txt`](../EDA/results/stage1_pipeline_results.txt)
+결과 로그: [`../EDA/logs/stage1_pipeline_results.txt`](../EDA/logs/stage1_pipeline_results.txt)
 
-- **이상치·결측치 처리 없음** — 9개 센서 컬럼 모두 원본 값 그대로 (물리적 한계값/Z-score 필터링, 결측 보간 전부 미적용). `pd.to_numeric` 변환만 수행.
-- **운전 사이클 정의(`cycle_id`, `is_operating`)**:
-  - 비플럭스 결측 구간 중 4시간 이하로 짧게 값이 존재하는 부분은 결측으로 흡수
-  - 흡수 후 **20시간 이상** 지속되는 결측 구간만 "세척 후보"로 선정
-  - 후보 구간 시작 직전 10개 값 vs 끝난 직후 10개 값의 중앙값을 비교해서, **비플럭스 5% 이상 상승 OR 운영차압 5% 이상 하락** 중 하나라도 만족하면 "세척"으로 인정 (비플럭스·운영차압 중 한쪽 데이터가 없어도 있는 쪽만으로 판정 가능하도록 독립 계산)
-  - 세척으로 끝난 게 아니라 연말(12월 말)에 데이터가 그냥 끊겨서 생긴 트레일링 조각은 정식 사이클에서 제외
-  - 결과: **운전 사이클 10개**
-- **기상데이터**: `data/raw/강수량(티센다각).csv`, `data/raw/기온_스플라인보간.csv` 원본을 시간(hour) 단위로 내림해서 직접 병합 (2021년 전체 커버). (rain 333개, temp 21개 결측 존재 — 다음 전처리 단계에서 처리 예정).
-
+- 이상치·결측치 처리 없음
+- 운전 사이클 정의(`cycle_id`, `is_operating`)
+- 기상데이터: `data/raw/강수량(티센다각).csv`, `data/raw/기온_스플라인보간.csv` 병합
 ---
 
 ## 시트 설명
