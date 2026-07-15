@@ -1,4 +1,4 @@
-# K-Water Recipe06 Dataset
+# RO Dataset
 
 An ML and optimization project that uses hourly operating data from a water treatment plant (RO membrane process) to study membrane fouling and find the right time to clean (CIP).
 
