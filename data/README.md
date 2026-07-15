@@ -13,7 +13,8 @@ Hourly operating data from a water treatment plant (RO membrane process)
 | `강수량(티센다각).csv` | `raw/` | 2021-01-01 ~ 2022-07-05 | 13,200 rows | Raw weather (rainfall), source of `rain` in `dataset_stage1.csv` |
 | `기온_스플라인보간.csv` | `raw/` | 2021-01-01 ~ 2022-12-31 | 17,467 rows | Raw weather (temperature), source of `temp` in `dataset_stage1.csv` |
 | `dataset_stage1.csv` | `processed/` | 2021-01-01 ~ 2021-12-31 | 8,760 rows | **Step 1** — before outlier/missing-value cleanup, just adds operating cycles + weather data |
-| `dataset_stage2.csv` | `processed/` | 2021-01-01 ~ 2021-12-31 | 8,760 rows | **Step 2** — outliers removed, missing values filled in. Used by `ML/model_comparison.py` |
+| `dataset_outliers_removed.csv` | `processed/` | 2021-01-01 ~ 2021-12-31 | 8,760 rows | **Step 2a** — bad sensor readings turned into missing values, not filled in yet |
+| `dataset_stage2.csv` | `processed/` | 2021-01-01 ~ 2021-12-31 | 8,760 rows | **Step 2b** — missing values filled in. Used by `ML/model_comparison.py` |
 
 - Data is recorded every **1 hour** (timestamp format: `YYYY-MM-DD HH:00:01`)
 - **Only 2021 data (dataset1) is used.** dataset2 (first half of 2022) is excluded from analysis
@@ -28,13 +29,11 @@ Script: [`../EDA/scripts/build_dataset_stage1.py`](../EDA/scripts/build_dataset_
 - Adds weather data from `data/raw/강수량(티센다각).csv` and `data/raw/기온_스플라인보간.csv`
 
 ## About `dataset_stage2.csv`
-Script: [`../Preprocess/build_dataset_stage2.py`](../Preprocess/build_dataset_stage2.py)
 
-Takes `dataset_stage1.csv` and cleans it up for modeling:
+Takes `dataset_stage1.csv` and cleans it up for modeling, in two scripts:
 
-- Fixes bad sensor readings (zeros, physically impossible values, spikes, sudden dips) by turning them into missing values
-- Fills a 35-day gap in turbidity data using matching dates from the 2022 dataset
-- Fills in remaining missing values (interpolation)
+1. [`../Preprocess/remove_outliers.py`](../Preprocess/remove_outliers.py) — finds bad sensor readings (zeros, physically impossible values, spikes, sudden dips) and turns them into missing values → `dataset_outliers_removed.csv`
+2. [`../Preprocess/fill_missing.py`](../Preprocess/fill_missing.py) — fills those missing values back in: a 35-day turbidity gap is filled using matching dates from the 2022 dataset, and the rest is filled by interpolation → `dataset_stage2.csv`
 
 ---
 
