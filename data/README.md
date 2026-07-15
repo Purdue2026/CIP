@@ -1,54 +1,62 @@
-# 데이터 설명
+# Data
 
-수처리 시설(RO 멤브레인 공정)의 시간별 운영 데이터셋. 
-상위 프로젝트 개요는 [`../README.md`](../README.md) 참고.
-
----
-
-## 파일 구성
-
-| 파일명 | 위치 | 기간 | 행수 | 비고 |
-|--------|------|------|------|------|
-| `kwater_recipe06_dataset1.xlsx` | `raw/` | 2021-01-01 ~ 2021-12-31 | 8,760행 (RO1 시트) | 원본, **사용** |
-| `kwater_recipe06_dataset2.xlsx` | `raw/` | 2022-01-01 ~ 2022-06-30 | 4,344행 (RO1 시트) | 원본, ⚠️ **미사용** (2022년 데이터는 분석에서 제외) |
-| `강수량(티센다각).csv` | `raw/` | 2021-01-01 ~ 2022-07-05 | 13,200행 | 원본 기상(강수량), **사용** — `dataset_stage1.csv`의 rain 출처 |
-| `기온_스플라인보간.csv` | `raw/` | 2021-01-01 ~ 2022-12-31 | 17,467행 | 원본 기상(기온), **사용** — `dataset_stage1.csv`의 temp 출처 |
-| `dataset_stage1.csv` | `processed/` | 2021-01-01 ~ 2021-12-31 | 8,760행 | **현재 1차본** — 이상치/결측치 처리 전, 운전 사이클 정의 + 기상데이터만 병합 |
-
-- 측정 간격: **1시간** (시각 형식: `YYYY-MM-DD HH:00:01`)
-- **2021년(dataset1) 데이터만 사용합니다.** dataset2(2022년 상반기)는 분석 범위에서 제외
+Hourly operating data from a water treatment plant (RO membrane process)
 
 ---
 
-## `dataset_stage1.csv` 설명
+## Files
 
-생성 스크립트: [`../EDA/scripts/build_dataset_stage1.py`](../EDA/scripts/build_dataset_stage1.py), 
-결과 로그: [`../EDA/logs/stage1_pipeline_results.txt`](../EDA/logs/stage1_pipeline_results.txt)
+| File | Location | Period | Rows | Notes |
+|------|----------|--------|------|-------|
+| `kwater_recipe06_dataset1.xlsx` | `raw/` | 2021-01-01 ~ 2021-12-31 | 8,760 rows (RO1 sheet) | Raw data |
+| `kwater_recipe06_dataset2.xlsx` | `raw/` | 2022-01-01 ~ 2022-06-30 | 4,344 rows (RO1 sheet) | Raw data |
+| `강수량(티센다각).csv` | `raw/` | 2021-01-01 ~ 2022-07-05 | 13,200 rows | Raw weather (rainfall), source of `rain` in `dataset_stage1.csv` |
+| `기온_스플라인보간.csv` | `raw/` | 2021-01-01 ~ 2022-12-31 | 17,467 rows | Raw weather (temperature), source of `temp` in `dataset_stage1.csv` |
+| `dataset_stage1.csv` | `processed/` | 2021-01-01 ~ 2021-12-31 | 8,760 rows | **Step 1** — before outlier/missing-value cleanup, just adds operating cycles + weather data |
+| `dataset_stage2.csv` | `processed/` | 2021-01-01 ~ 2021-12-31 | 8,760 rows | **Step 2** — outliers removed, missing values filled in. Used by `ML/model_comparison.py` |
 
-- 이상치·결측치 처리 없음
-- 운전 사이클 정의(`cycle_id`, `is_operating`)
-- 기상데이터: `data/raw/강수량(티센다각).csv`, `data/raw/기온_스플라인보간.csv` 병합
+- Data is recorded every **1 hour** (timestamp format: `YYYY-MM-DD HH:00:01`)
+- **Only 2021 data (dataset1) is used.** dataset2 (first half of 2022) is excluded from analysis
+
 ---
 
-## 시트 설명
+## About `dataset_stage1.csv`
+Script: [`../EDA/scripts/build_dataset_stage1.py`](../EDA/scripts/build_dataset_stage1.py)
 
-### RO1 (역삼투 공정, Reverse Osmosis)
+- No outlier or missing-value cleanup yet
+- Adds operating cycle labels (`cycle_id`, `is_operating`)
+- Adds weather data from `data/raw/강수량(티센다각).csv` and `data/raw/기온_스플라인보간.csv`
 
-: 고압으로 반투막을 통해 용존 물질을 제거하는 공정
+## About `dataset_stage2.csv`
+Script: [`../Preprocess/build_dataset_stage2.py`](../Preprocess/build_dataset_stage2.py)
 
-| 컬럼 | 설명 | 단위 |
-|------|------|------|
-| `Date` | 측정 일시 | datetime |
-| `운영차압` | 막 전후 압력 차 | bar |
-| `비플럭스` | 단위 면적당 투과 유량 (Specific Flux) | LMH/bar |
-| `원수 수온` | 유입 원수 온도 | °C |
-| `원수 탁도` | 유입 원수 탁도 | NTU |
-| `원수 TDS` | 총 용존 고형물 | mg/L |
-| `원수 전기전도도` | 유입 원수 전기전도도 | μS/cm |
-| `원수 pH` | 유입 원수 수소이온농도 | - |
-| `유입압력` | 막 유입 측 압력 | bar |
-| `생산량` | 시간당 생산 수량 | m³/h |
+Takes `dataset_stage1.csv` and cleans it up for modeling:
 
-`dataset_stage1.csv`는 위 컬럼 외에 `is_operating`(세척/장기결측 구간 여부), `cycle_id`(운전 사이클 번호, 세척 구간은 0), `rain`(강수량), `temp`(기온)를 포함.
+- Fixes bad sensor readings (zeros, physically impossible values, spikes, sudden dips) by turning them into missing values
+- Fills a 35-day gap in turbidity data using matching dates from the 2022 dataset
+- Fills in remaining missing values (interpolation)
 
-기초 통계, 결측률, 이상값 등 데이터 품질 분석 결과는 [`../EDA/README.md`](../EDA/README.md)를 참고.
+---
+
+## Sheet details
+
+### RO1 (Reverse Osmosis)
+
+: A process that uses high pressure to remove dissolved substances through a membrane.
+
+| Column | Description | Unit |
+|--------|-------------|------|
+| `Date` | Timestamp | datetime |
+| `운영차압` | Pressure difference across the membrane | bar |
+| `비플럭스` | Specific flux (flow rate per membrane area) | LMH/bar |
+| `원수 수온` | Feed water temperature | °C |
+| `원수 탁도` | Feed water turbidity | NTU |
+| `원수 TDS` | Total dissolved solids | mg/L |
+| `원수 전기전도도` | Feed water conductivity | μS/cm |
+| `원수 pH` | Feed water pH | - |
+| `유입압력` | Inlet pressure | bar |
+| `생산량` | Water produced per hour | m³/h |
+
+`dataset_stage1.csv` and `dataset_stage2.csv` also include `is_operating` (whether the plant is running or in a cleaning/long-gap period), `cycle_id` (operating cycle number, 0 during cleaning), `rain`, and `temp`.
+
+For basic statistics, missing-data rates, and outlier analysis, see [`../EDA/README.md`](../EDA/README.md).
