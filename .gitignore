@@ -2,3 +2,10 @@ venv/
 __pycache__/
 *.pyc
 .DS_Store
+*.npz
+private/
+
+# 기타 추가 실험
+ML/seed_variance_experiment.py
+ML/plots/seed_variance.png
+ML/results/seed_variance_results.txt
